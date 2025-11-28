@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stackly Ticketing Tool</title>
+
+<style>
+/* RESET */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:"Poppins",sans-serif;
+}
+
+body{
+  background:#f4f9ff;
+}
+
+/* ================= LOADER ================= */
+#loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #5d2bff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 9999;
+  animation: fadeOut 1.2s ease 1s forwards;
+}
+
+.loader-content {
+  text-align: center;
+  position: relative;
+}
+
+.pulse-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  transform: translate(-50%, -50%);
+  border: 3px solid rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  animation: pulse 1.5s infinite ease-in-out;
+  z-index: 1;
+}
+
+#loader p {
+  color: white;
+  margin-top: 15px;
+  font-size: 1.2rem;
+  letter-spacing: 1px;
+  animation: fadeText 3s infinite alternate;
+}
+
+/* ANIMATIONS */
+@keyframes pulse {
+  0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.7; }
+  70% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.2; }
+  100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.7; }
+}
+
+@keyframes fadeText {
+  from { opacity: 0.5; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; visibility: hidden; }
+}
+
+
+/* ================= NAVBAR ANIMATED ================= */
+.navbar{
+  width:100%;
+  background: linear-gradient(90deg, #4b2cff, #885cff, #c56ffd);
+  color:#fff;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px 20px;
+  position:fixed;
+  top:0;
+  left:0;
+  z-index:9999;
+  box-shadow:0 4px 25px rgba(0,0,0,0.25);
+
+  transform: translateY(-40px);
+  opacity:0;
+  animation: navbarDrop 0.8s ease forwards;
+}
+
+@keyframes navbarDrop {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* LOGO animation */
+.logo-area img{
+  height:50px;
+  width:auto;
+  opacity:0;
+  animation: logoFade 1s ease 0.4s forwards;
+}
+
+@keyframes logoFade {
+  from { transform: scale(0.6); opacity:0; }
+  to   { transform: scale(1); opacity:1; }
+}
+
+/* DESKTOP MENU */
+.nav-menu{
+  display:flex;
+  gap:25px;
+  list-style:none;
+}
+
+.nav-menu li a{
+  color:white;
+  text-decoration:none;
+  font-size:16px;
+  padding:8px 12px;
+  border-radius:8px;
+  transition:.3s;
+}
+
+/* GLOW HOVER */
+.nav-menu li a:hover{
+  background:#ffffff26;
+  box-shadow:0 0 10px #ffffff77;
+  transform: translateY(-3px);
+}
+
+/* DROPDOWN */
+.dropdown{
+  position:relative;
+}
+
+.dropdown-menu{
+  position:absolute;
+  top:42px;
+  left:0;
+  background:#0b2447;
+  width:160px;
+  border-radius:8px;
+  list-style:none;
+  padding:10px 0;
+  border:1px solid rgba(255,255,255,0.2);
+  display:none;
+  animation: dropFade .35s ease;
+}
+
+@keyframes dropFade {
+  from { opacity:0; transform:translateY(8px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.dropdown.open .dropdown-menu{
+  display:block;
+}
+
+/* HAMBURGER */
+.hamburger{
+  display:none;
+  flex-direction:column;
+  gap:5px;
+  cursor:pointer;
+  opacity:0;
+  animation: fadeIn 1s ease 0.5s forwards;
+}
+
+@keyframes fadeIn {
+  to { opacity:1; }
+}
+
+.hamburger span{
+  width:28px;
+  height:3px;
+  background:white;
+  border-radius:4px;
+  transition:.3s;
+}
+
+/* MOBILE MENU */
+@media(max-width:768px){
+
+  .hamburger{
+    display:flex;
+  }
+
+  .nav-menu{
+    position:fixed;
+    top:70px;
+    right:-100%;
+    width:260px;
+    background:#0b2447;
+    height:calc(100vh - 70px);
+    flex-direction:column;
+    padding-top:15px;
+    padding-bottom:30px;
+    box-shadow:-4px 0 18px rgba(0,0,0,0.3);
+    transition:0.4s ease;
+  }
+
+  .nav-menu.active{
+    right:0;
+  }
+
+  .nav-menu li{
+    width:100%;
+    border-bottom:1px solid rgba(255,255,255,0.1);
+
+    /* Animate each link (stagger effect) */
+    opacity:0;
+    animation: slideIn 0.6s ease forwards;
+  }
+
+  @keyframes slideIn {
+    0% { transform:translateX(50px); opacity:0; }
+    100% { transform:translateX(0); opacity:1; }
+  }
+
+  .nav-menu li a{
+    display:block;
+    width:100%;
+    padding:15px 8px;
+    font-size:18px;
+  }
+
+  .dropdown-menu{
+    position:relative;
+    width:100%;
+    border-radius:0;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ===== LOADER ===== -->
+<div id="loader">
+  <div class="loader-content">
+    <div class="pulse-ring"></div>
+    <p>Loading Ticketing Tool...</p>
+  </div>
+</div>
+
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar">
+
+  <div class="logo-area">
+    <img src="Screenshot (7) (1) (1).webp" alt="Logo">
+  </div>
+
+ <ul class="nav-menu" id="navMenu">
+
+  <li class="dropdown">
+    <a href="#" class="dropdown-btn">Home ▾</a>
+    <ul class="dropdown-menu">
+      <li><a href="index.html">Home 1</a></li>
+      <li><a href="Home2.html">Home 2</a></li>
+    </ul>
+  </li>
+
+  <li><a href="dashboard.html">Dashboard</a></li>
+  <li><a href="compony.html">Company</a></li>
+   <li class="dropdown">
+    <a href="#" class="dropdown-btn">Product Now ▾</a>
+    <ul class="dropdown-menu">
+      <li><a href="featuredprodutcs.html">Featured</a></li>
+      <li><a href="stacklyai.html">Stackly AI</a></li>
+    </ul>
+  </li>
+
+  <li><a href="industries.html">Industries</a></li>
+  <li><a href="learning.html">Learning</a></li>
+  <li><a href="support.html">Support</a></li>
+  <li><a href="contact.html">Contact</a></li>
+<li><a href="signup.html">Signin</a></li>
+</ul>
+
+  <div class="hamburger" id="hamburger">
+    <span></span><span></span><span></span>
+  </div>
+
+</nav>
+
+<!-- ================= JS ================= -->
+<script>
+/* MOBILE MENU TOGGLE */
+const hamburger = document.getElementById("hamburger");
+const navMenu = document.getElementById("navMenu");
+
+hamburger.addEventListener("click", () => {
+  navMenu.classList.toggle("active");
+});
+
+/* DROPDOWNS OPEN */
+document.querySelectorAll(".dropdown-btn").forEach(btn => {
+  btn.addEventListener("click", function(e){
+    e.preventDefault();
+    this.parentElement.classList.toggle("open");
+  });
+});
+</script>
+
+
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* ================= GLOBAL ================= */
+:root{
+  --bg:#0a0f1d;
+  --panel:#111827;
+  --text:#e2e8f0;
+  --muted:#94a3b8;
+  --accent:#00eaff;
+  --accent2:#4ade80;
+  --radius:18px;
+}
+*{
+  margin:0;padding:0;box-sizing:border-box;
+  font-family:Poppins,sans-serif;
+}
+body{
+  background:var(--bg);
+  color:var(--text);
+  overflow-x:hidden;
+  line-height:1.6;
+  padding-bottom:40px;
+  margin-top: 60px;
+}
+
+section{margin-bottom:40px;}
+
+/* ================= HEADER ================= */
+header{
+  text-align:center;
+  padding:30px 5%;
+}
+header h1{
+  font-size:clamp(24px,5vw,38px);
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+header p{
+  max-width:700px;
+  margin:10px auto;
+  font-size:clamp(14px,3.8vw,17px);
+  color:var(--muted);
+}
+
+/* ================= CTA ================= */
+.btn-main{
+  margin-top:14px;
+  padding:12px 22px;
+  border:none;
+  border-radius:var(--radius);
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  color:#000;
+  font-weight:700;
+  cursor:pointer;
+  font-size:clamp(14px,4vw,16px);
+  box-shadow:0 4px 20px rgba(0,234,255,0.2);
+  transition:.3s;
+}
+.btn-main:hover{
+  transform:translateY(-3px);
+}
+
+/* ================= SECTION TITLE ================= */
+.sec-title{
+  font-size:clamp(20px,5vw,28px);
+  margin-bottom:20px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  text-align:center;
+}
+
+/* ================= FEATURED PRODUCTS ================= */
+.products{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:20px;
+  padding:0 5%;
+}
+.product{
+  background:var(--panel);
+  padding:20px;
+  border-radius:var(--radius);
+  border:1px solid rgba(255,255,255,0.08);
+  box-shadow:0 8px 30px rgba(0,0,0,0.4);
+  transition:.3s;
+}
+.product:hover{
+  transform:translateY(-6px);
+}
+.product h3{
+  font-size:clamp(16px,4vw,20px);
+  margin-bottom:8px;
+}
+.product p{
+  font-size:clamp(13px,3.6vw,15px);
+  color:var(--muted);
+}
+.badge{
+  display:inline-block;
+  padding:6px 12px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  border-radius:10px;
+  color:black;
+  font-weight:700;
+  margin-bottom:12px;
+}
+
+/* ================= FEATURE LIST ================= */
+.features{
+  margin-top:12px;
+}
+.feature{
+  display:flex;
+  gap:8px;
+  align-items:flex-start;
+  margin-bottom:6px;
+  font-size:clamp(13px,3.6vw,15px);
+}
+.feature .dot{
+  width:10px;height:10px;
+  background:var(--accent);
+  border-radius:50%;
+  margin-top:5px;
+}
+
+/* ================= ARCHITECTURE ================= */
+.arch-grid{
+  padding:0 5%;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:20px;
+}
+.arch{
+  background:#0f172a;
+  padding:20px;
+  border-radius:var(--radius);
+  border:1px solid rgba(255,255,255,0.08);
+}
+.arch h4{
+  font-size:clamp(16px,4vw,20px);
+  margin-bottom:8px;
+}
+.arch p{
+  color:var(--muted);
+  font-size:clamp(13px,3.6vw,15px);
+}
+.diagram{
+  height:140px;
+  background:rgba(255,255,255,0.05);
+  border-radius:var(--radius);
+  display:flex;justify-content:center;align-items:center;
+  margin-top:10px;
+  font-size:clamp(12px,3.4vw,14px);
+  color:var(--muted);
+}
+
+/* ================= THEORY ================= */
+.theory{
+  padding:0 5%;
+}
+.t-card{
+  background:#0f172a;
+  padding:20px;
+  border-radius:var(--radius);
+  border:1px solid rgba(255,255,255,0.08);
+  margin-bottom:16px;
+}
+.t-card h4{
+  font-size:clamp(16px,4vw,20px);
+  margin-bottom:6px;
+}
+.t-card p{
+  font-size:clamp(13px,3.6vw,15px);
+  color:var(--muted);
+}
+
+/* ================= WORKFLOW ================= */
+.workflow{
+  padding:0 5%;
+}
+.step{
+  background:#111827;
+  padding:14px;
+  margin-bottom:12px;
+  border-radius:var(--radius);
+  border-left:6px solid var(--accent);
+  font-size:clamp(13px,3.6vw,15px);
+}
+
+/* MOBILE FIXES */
+@media(max-width:600px){
+  .products,.arch-grid,.theory,.workflow{
+    padding:0 4%;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- ================= HEADER ================= -->
+<header>
+  <h1>Stackly Enterprise Ticketing – Featured Products</h1>
+  <p>Designed for IT teams who need speed, automation, stability, and mobile-perfect performance.</p>
+  <a href="404.html"><button class="btn-main">Explore Full Suite</button></a>
+</header>
+
+
+<!-- ================= FEATURED PRODUCTS ================= -->
+<h2 class="sec-title">Featured Modules</h2>
+
+<div class="products">
+
+  <div class="product">
+    <span class="badge">Core</span>
+    <h3>Stackly Core – Ticket Engine</h3>
+    <p>Main engine for classification, SLA execution & lifecycle management.</p>
+    <div class="features">
+      <div class="feature"><div class="dot"></div> Email, Chat, API ingestion</div>
+      <div class="feature"><div class="dot"></div> Auto priority scoring</div>
+      <div class="feature"><div class="dot"></div> SLA timers & escalation</div>
+    </div>
+  </div>
+
+  <div class="product">
+    <span class="badge">Automate</span>
+    <h3>Runbook Engine</h3>
+    <p>Automates repetitive fixes with no manual involvement.</p>
+    <div class="features">
+      <div class="feature"><div class="dot"></div> Drag & drop playbooks</div>
+      <div class="feature"><div class="dot"></div> Auto remediation</div>
+      <div class="feature"><div class="dot"></div> Secure execution layer</div>
+    </div>
+  </div>
+
+  <div class="product">
+    <span class="badge">Observe</span>
+    <h3>Analytics & Monitoring</h3>
+    <p>Track team performance, SLA, backlog trend & anomalies.</p>
+    <div class="features">
+      <div class="feature"><div class="dot"></div> Heatmaps & timelines</div>
+      <div class="feature"><div class="dot"></div> Anomaly alerts</div>
+      <div class="feature"><div class="dot"></div> Custom report builder</div>
+    </div>
+  </div>
+
+  <div class="product">
+    <span class="badge">Collab</span>
+    <h3>Agent Workspace</h3>
+    <p>Unified console with context-aware ticket handling.</p>
+    <div class="features">
+      <div class="feature"><div class="dot"></div> Smart context panel</div>
+      <div class="feature"><div class="dot"></div> Threaded notes</div>
+      <div class="feature"><div class="dot"></div> Knowledge suggestions</div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ================= ARCHITECTURE ================= -->
+<h2 class="sec-title">Architecture Overview</h2>
+
+<div class="arch-grid">
+  <div class="arch">
+    <h4>Ingestion Pipeline</h4>
+    <p>Collects tickets from email, bots, cloud monitors.</p>
+    <div class="diagram">Ingestion → Queue → Normalizer</div>
+  </div>
+
+  <div class="arch">
+    <h4>Routing Engine</h4>
+    <p>Assigns best agent using skill matrix + workload.</p>
+    <div class="diagram">AI Routing Model</div>
+  </div>
+
+  <div class="arch">
+    <h4>Automation Layer</h4>
+    <p>Runs playbooks & remediation tasks automatically.</p>
+    <div class="diagram">Playbook Runner</div>
+  </div>
+
+  <div class="arch">
+    <h4>Observability</h4>
+    <p>Real-time metrics, SLA charts & anomaly detection.</p>
+    <div class="diagram">Dashboard Pipeline</div>
+  </div>
+</div>
+
+
+<!-- ================= THEORY ================= -->
+<h2 class="sec-title">System Theory</h2>
+
+<div class="theory">
+  <div class="t-card">
+    <h4>Priority Score Algorithm</h4>
+    <p>Severity + User count + Sentiment + SLA weight generate dynamic priority.</p>
+  </div>
+
+  <div class="t-card">
+    <h4>Correlation Engine</h4>
+    <p>Clusters multiple issues into single incident using vector embeddings.</p>
+  </div>
+
+  <div class="t-card">
+    <h4>Reliability Mechanism</h4>
+    <p>Event sourcing + multi-region replication ensures zero data loss.</p>
+  </div>
+</div>
+
+
+<!-- ================= WORKFLOW ================= -->
+<h2 class="sec-title">Ticket Workflow</h2>
+
+<div class="workflow">
+  <div class="step"><strong>1. Create:</strong> User submits or auto alert triggers.</div>
+  <div class="step"><strong>2. Classify:</strong> System adds metadata & tags.</div>
+  <div class="step"><strong>3. Route:</strong> Assigned to best agent.</div>
+  <div class="step"><strong>4. Diagnose:</strong> Agent investigates root cause.</div>
+  <div class="step"><strong>5. Fix:</strong> Automation or manual resolution.</div>
+  <div class="step"><strong>6. Close:</strong> Confirmed & logged into SLA history.</div>
+</div>
+
+</body>
+</html>
+<!-- ================= FOOTER START ================= -->
+<style>
+
+/* FOOTER BACKGROUND */
+footer{
+  background: linear-gradient(180deg, #021526, #031c33, #000d18);
+  color:#fff;
+  padding:60px 8%;
+  margin-top:80px;
+  position:relative;
+  overflow:hidden;
+  animation: footerFade 1s ease forwards;
+}
+
+/* Fade animation */
+@keyframes footerFade{
+  from{opacity:0; transform:translateY(40px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
+/* SOFT MOVING BACKLIGHT ANIMATION */
+footer::before{
+  content:"";
+  position:absolute;
+  top:-100px;
+  left:0;
+  width:120%;
+  height:200px;
+  background:radial-gradient(circle,#00eaff33,#000d18);
+  animation: moveLight 6s infinite linear;
+}
+@keyframes moveLight{
+  0%{transform:translateX(-30%);}
+  100%{transform:translateX(100%);}
+}
+
+/* GRID */
+.footer-container{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:40px;
+  align-items:flex-start;
+  position:relative;
+  z-index:2;
+}
+
+/* LEFT SIDE */
+.footer-left img{
+  height:60px;
+  margin-bottom:10px;
+  animation: fadeUp 1s ease forwards;
+  opacity:0;
+}
+.footer-left p{
+  opacity:0.85;
+  margin:8px 0 15px;
+  line-height:1.5;
+  animation: fadeUp 1.2s ease forwards;
+  opacity:0;
+}
+
+/* FADE UP ANIMATION */
+@keyframes fadeUp{
+  from{opacity:0; transform:translateY(20px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
+/* SOCIAL ICON HOVER FLOAT */
+.social-icons{
+  display:flex;
+  gap:12px;
+  margin-top:10px;
+}
+.social-icons a{
+  height:45px;
+  width:45px;
+  border-radius:50%;
+  background:#ffffff15;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  transition:.3s;
+  animation: fadeUp 1.4s ease forwards;
+  opacity:0;
+}
+.social-icons a:hover{
+  transform:translateY(-6px) scale(1.1);
+  background:#00eaff;
+}
+.social-icons img{
+  height:22px;
+  width:22px;
+}
+
+/* CENTER LINKS */
+.footer-links h3,
+.footer-contact h3{
+  margin-bottom:12px;
+  font-size:22px;
+  animation: fadeUp 1s ease forwards;
+  opacity:0;
+  color:#00eaff;
+  text-shadow:0 0 10px #00eaff55;
+}
+
+.footer-links a{
+  display:block;
+  text-decoration:none;
+  color:#cbd5e1;
+  margin:6px 0;
+  overflow:hidden;
+  position:relative;
+  animation: linkSlide .6s ease forwards;
+  opacity:0;
+}
+
+/* Slide links one by one */
+.footer-links a:nth-child(1){ animation-delay:.3s; }
+.footer-links a:nth-child(2){ animation-delay:.4s; }
+.footer-links a:nth-child(3){ animation-delay:.5s; }
+.footer-links a:nth-child(4){ animation-delay:.6s; }
+.footer-links a:nth-child(5){ animation-delay:.7s; }
+.footer-links a:nth-child(6){ animation-delay:.8s; }
+.footer-links a:nth-child(7){ animation-delay:.9s; }
+.footer-links a:nth-child(8){ animation-delay:1s; }
+.footer-links a:nth-child(9){ animation-delay:1.1s; }
+.footer-links a:nth-child(10){ animation-delay:1.2s; }
+
+@keyframes linkSlide{
+  from{opacity:0; transform:translateX(-20px);}
+  to{opacity:1; transform:translateX(0);}
+}
+
+.footer-links a:hover{
+  color:#00eaff;
+  transform:translateX(6px);
+}
+
+/* RIGHT CONTACT */
+.footer-contact p{
+  margin:6px 0;
+  opacity:.85;
+  animation: fadeUp 1s ease forwards;
+  opacity:0;
+}
+
+/* SUBSCRIBE BAR */
+.subscribe-box{
+  margin-top:15px;
+  display:flex;
+  animation: fadeUp 1.4s ease forwards;
+  opacity:0;
+}
+
+.subscribe-box input{
+  width:70%;
+  padding:10px;
+  border:none;
+  border-radius:6px 0 0 6px;
+  outline:none;
+  background:#ffffff10;
+  color:white;
+  transition:.3s;
+}
+.subscribe-box input:focus{
+  box-shadow:0 0 10px #00eaffaa;
+}
+
+.subscribe-box button{
+  width:30%;
+  border:none;
+  background:#00eaff;
+  color:#000;
+  font-weight:600;
+  cursor:pointer;
+  border-radius:0 6px 6px 0;
+  transition:.3s;
+}
+.subscribe-box button:hover{
+  background:#4ade80;
+}
+
+/* COPYRIGHT */
+.footer-bottom{
+  text-align:center;
+  padding-top:20px;
+  margin-top:30px;
+  border-top:1px solid #1e293b;
+  opacity:0;
+  animation: fadeUp 1.4s ease forwards;
+}
+
+/* MOBILE */
+/* MOBILE */
+@media(max-width:600px){
+
+  footer{
+    text-align:center; /* Keep entire footer centered */
+  }
+
+  .social-icons{
+    justify-content:center;
+  }
+
+  /* QUICK LINKS heading stays center */
+  .footer-links h3{
+    text-align:center !important;
+    width:100%;
+  }
+
+  /* QUICK LINKS items → left aligned */
+  .footer-links a{
+    text-align:left !important;
+    width:100%;
+    display:block;
+    margin-left:100px;       /* ensure left alignment */
+    padding-left:0;      /* ensure start alignment */
+  }
+
+  .subscribe-box{
+    flex-direction:column;
+  }
+
+  .subscribe-box input,
+  .subscribe-box button{
+    width:100%;
+    border-radius:6px;
+    margin-bottom:10px;
+  }
+}
+
+
+</style>
+
+
+<footer>
+  <div class="footer-container">
+
+    <!-- LEFT SIDE -->
+    <div class="footer-left">
+      <img src="Screenshot (7) (1) (1).webp" alt="Company Logo">
+      <p>Stackly Tickets helps teams track issues, resolve problems faster, and deliver smooth IT support.</p>
+
+      <div class="social-icons">
+        <a href="404.html"><img src="facebook.webp" alt="Facebook"></a>
+        <a href="404.html"><img src="twitter-logo.webp" alt="Twitter"></a>
+        <a href="404.html"><img src="linkedin.webp" alt="LinkedIn"></a>
+        <a href="404.html"><img src="instagram.webp" alt="Instagram"></a>
+      </div>
+    </div>
+
+    <!-- CENTER LINKS -->
+    <div class="footer-links">
+      <h3>Quick Links</h3>
+
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="compony.html">Company</a>
+      <a href="featuredprodutcs.html">Featured </a>
+      <a href="stacklyai.html">Stackly AI</a>
+      <a href="industries.html">Industries</a>
+      <a href="learning.html">Learning</a>
+      <a href="support.html">Support</a>
+      <a href="contact.html">Contact</a>
+      <a href="signup.html">Signin</a>
+    </div>
+
+    <!-- RIGHT CONTACT -->
+    <div class="footer-contact">
+      <h3>Contact Us</h3>
+      <p>📍 Bengaluru, Karnataka</p>
+      <p>📞 +91 98765 43210</p>
+      <p>✉ support@stacklyev.com</p>
+
+      <form action="404.html" method="get" class="subscribe-box">
+        <input type="email" name="email" placeholder="Enter your email" required>
+        <button type="submit">Join</button>
+      </form>
+    </div>
+
+  </div>
+
+  <p class="footer-bottom">© 2025 Stackly IT. All Rights Reserved.</p>
+</footer>
+
+<!-- ================= FOOTER END ================= -->

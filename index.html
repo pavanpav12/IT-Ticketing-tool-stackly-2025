@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stackly Ticketing Tool</title>
+
+<style>
+/* RESET */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:"Poppins",sans-serif;
+}
+
+body{
+  background:#f4f9ff;
+}
+
+/* ================= LOADER ================= */
+#loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #5d2bff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 9999;
+  animation: fadeOut 1.2s ease 1s forwards;
+}
+
+.loader-content {
+  text-align: center;
+  position: relative;
+}
+
+.pulse-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  transform: translate(-50%, -50%);
+  border: 3px solid rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  animation: pulse 1.5s infinite ease-in-out;
+  z-index: 1;
+}
+
+#loader p {
+  color: white;
+  margin-top: 15px;
+  font-size: 1.2rem;
+  letter-spacing: 1px;
+  animation: fadeText 3s infinite alternate;
+}
+
+/* ANIMATIONS */
+@keyframes pulse {
+  0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.7; }
+  70% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.2; }
+  100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.7; }
+}
+
+@keyframes fadeText {
+  from { opacity: 0.5; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; visibility: hidden; }
+}
+
+
+/* ================= NAVBAR ANIMATED ================= */
+.navbar{
+  width:100%;
+  background: linear-gradient(90deg, #4b2cff, #885cff, #c56ffd);
+  color:#fff;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px 20px;
+  position:fixed;
+  top:0;
+  left:0;
+  z-index:9999;
+  box-shadow:0 4px 25px rgba(0,0,0,0.25);
+
+  transform: translateY(-40px);
+  opacity:0;
+  animation: navbarDrop 0.8s ease forwards;
+}
+
+@keyframes navbarDrop {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* LOGO animation */
+.logo-area img{
+  height:50px;
+  width:auto;
+  opacity:0;
+  animation: logoFade 1s ease 0.4s forwards;
+}
+
+@keyframes logoFade {
+  from { transform: scale(0.6); opacity:0; }
+  to   { transform: scale(1); opacity:1; }
+}
+
+/* DESKTOP MENU */
+.nav-menu{
+  display:flex;
+  gap:25px;
+  list-style:none;
+}
+
+.nav-menu li a{
+  color:white;
+  text-decoration:none;
+  font-size:16px;
+  padding:8px 12px;
+  border-radius:8px;
+  transition:.3s;
+}
+
+/* GLOW HOVER */
+.nav-menu li a:hover{
+  background:#ffffff26;
+  box-shadow:0 0 10px #ffffff77;
+  transform: translateY(-3px);
+}
+
+/* DROPDOWN */
+.dropdown{
+  position:relative;
+}
+
+.dropdown-menu{
+  position:absolute;
+  top:42px;
+  left:0;
+  background:#0b2447;
+  width:160px;
+  border-radius:8px;
+  list-style:none;
+  padding:10px 0;
+  border:1px solid rgba(255,255,255,0.2);
+  display:none;
+  animation: dropFade .35s ease;
+}
+
+@keyframes dropFade {
+  from { opacity:0; transform:translateY(8px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.dropdown.open .dropdown-menu{
+  display:block;
+}
+
+/* HAMBURGER */
+.hamburger{
+  display:none;
+  flex-direction:column;
+  gap:5px;
+  cursor:pointer;
+  opacity:0;
+  animation: fadeIn 1s ease 0.5s forwards;
+}
+
+@keyframes fadeIn {
+  to { opacity:1; }
+}
+
+.hamburger span{
+  width:28px;
+  height:3px;
+  background:white;
+  border-radius:4px;
+  transition:.3s;
+}
+
+/* MOBILE MENU */
+@media(max-width:768px){
+
+  .hamburger{
+    display:flex;
+  }
+
+  .nav-menu{
+    position:fixed;
+    top:70px;
+    right:-100%;
+    width:260px;
+    background:#0b2447;
+    height:calc(100vh - 70px);
+    flex-direction:column;
+    padding-top:15px;
+    padding-bottom:30px;
+    box-shadow:-4px 0 18px rgba(0,0,0,0.3);
+    transition:0.4s ease;
+  }
+
+  .nav-menu.active{
+    right:0;
+  }
+
+  .nav-menu li{
+    width:100%;
+    border-bottom:1px solid rgba(255,255,255,0.1);
+
+    /* Animate each link (stagger effect) */
+    opacity:0;
+    animation: slideIn 0.6s ease forwards;
+  }
+
+  @keyframes slideIn {
+    0% { transform:translateX(50px); opacity:0; }
+    100% { transform:translateX(0); opacity:1; }
+  }
+
+  .nav-menu li a{
+    display:block;
+    width:100%;
+    padding:15px 8px;
+    font-size:18px;
+  }
+
+  .dropdown-menu{
+    position:relative;
+    width:100%;
+    border-radius:0;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ===== LOADER ===== -->
+<div id="loader">
+  <div class="loader-content">
+    <div class="pulse-ring"></div>
+    <p>Loading Ticketing Tool...</p>
+  </div>
+</div>
+
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar">
+
+  <div class="logo-area">
+    <img src="Screenshot (7) (1) (1).webp" alt="Logo">
+  </div>
+
+ <ul class="nav-menu" id="navMenu">
+
+  <li class="dropdown">
+    <a href="#" class="dropdown-btn">Home ▾</a>
+    <ul class="dropdown-menu">
+      <li><a href="index.html">Home 1</a></li>
+      <li><a href="Home2.html">Home 2</a></li>
+    </ul>
+  </li>
+
+  <li><a href="dashboard.html">Dashboard</a></li>
+  <li><a href="compony.html">Company</a></li>
+   <li class="dropdown">
+    <a href="#" class="dropdown-btn">Product Now ▾</a>
+    <ul class="dropdown-menu">
+      <li><a href="featuredprodutcs.html">Featured</a></li>
+      <li><a href="stacklyai.html">Stackly AI</a></li>
+    </ul>
+  </li>
+
+  <li><a href="industries.html">Industries</a></li>
+  <li><a href="learning.html">Learning</a></li>
+  <li><a href="support.html">Support</a></li>
+  <li><a href="contact.html">Contact</a></li>
+<li><a href="signup.html">Signin</a></li>
+</ul>
+
+  <div class="hamburger" id="hamburger">
+    <span></span><span></span><span></span>
+  </div>
+
+</nav>
+
+<!-- ================= JS ================= -->
+<script>
+/* MOBILE MENU TOGGLE */
+const hamburger = document.getElementById("hamburger");
+const navMenu = document.getElementById("navMenu");
+
+hamburger.addEventListener("click", () => {
+  navMenu.classList.toggle("active");
+});
+
+/* DROPDOWNS OPEN */
+document.querySelectorAll(".dropdown-btn").forEach(btn => {
+  btn.addEventListener("click", function(e){
+    e.preventDefault();
+    this.parentElement.classList.toggle("open");
+  });
+});
+</script>
+
+</body>
+</html>
+
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Poppins,sans-serif;}
+body{background:#0a1124;color:#fff;overflow-x:hidden;}
+
+/* GLOBAL ANIMATION */
+@keyframes fadeUp{0%{opacity:0;transform:translateY(25px);}100%{opacity:1;transform:translateY(0);}}
+@keyframes float{0%{transform:translateY(0);}50%{transform:translateY(-10px);}100%{transform:translateY(0);}}
+@keyframes rotateBg{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+
+/* ================= HERO ================= */
+.hero{
+  min-height:100vh;
+  padding:120px 20px 60px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.hero::before{
+  content:"";position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+  background:radial-gradient(circle,#7c3aed,#4c1d95,#0a1124);
+  filter:blur(70px);
+  animation:rotateBg 25s linear infinite;
+  z-index:-1;
+}
+.hero h1{
+  font-size:40px;max-width:800px;margin:auto;
+  background:linear-gradient(90deg,#22d3ee,#4ade80);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:fadeUp 1s ease forwards;
+}
+.hero p{
+  max-width:700px;margin:20px auto;color:#cbd5e1;font-size:17px;line-height:1.7;
+  animation:fadeUp 1.1s ease;
+}
+.btn{
+  margin-top:25px;padding:13px 32px;border:none;border-radius:10px;
+  background:linear-gradient(90deg,#22d3ee,#4ade80);
+  font-size:17px;font-weight:700;color:#000;cursor:pointer;
+  box-shadow:0 0 25px rgba(34,211,238,0.4);transition:0.3s;
+  animation:fadeUp 1.2s ease;
+}
+.btn:hover{transform:scale(1.07);}
+
+.hero-images{margin-top:40px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap;}
+.hero-images img{
+  width:260px;height:180px;object-fit:cover;border-radius:16px;
+  box-shadow:0 8px 30px rgba(0,0,0,0.5);
+  animation:float 6s infinite;
+}
+
+/* MOBILE HERO */
+@media(max-width:768px){
+  .hero h1{font-size:30px;}
+  .hero p{font-size:16px;}
+  .hero-images img{width:90%;height:180px;}
+}
+
+/* ================= FEATURES ================= */
+.features{padding:70px 20px;text-align:center;}
+.features h2{
+  font-size:32px;margin-bottom:25px;
+  background:linear-gradient(90deg,#34d399,#06b6d4);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.feature-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:20px;max-width:1100px;margin:auto;
+}
+.card{
+  background:#111827;border-radius:14px;padding:25px;
+  border:1px solid rgba(255,255,255,0.05);
+  box-shadow:0 6px 25px rgba(0,0,0,0.35);
+  transition:0.3s;
+}
+.card:hover{transform:translateY(-8px);}
+.card img{width:70px;margin-bottom:12px;}
+.card h3{margin-bottom:8px;}
+.card p{color:#a1a1aa;line-height:1.5;}
+
+/* ================= PAGE 2: ADVANCED OVERVIEW ================= */
+.section{
+  padding:80px 20px;
+  max-width:1100px;margin:auto;
+}
+.section h2{
+  font-size:30px;margin-bottom:15px;text-align:center;
+  background:linear-gradient(90deg,#60a5fa,#818cf8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.section p{
+  font-size:17px;color:#cbd5e1;margin-bottom:20px;line-height:1.7;
+}
+
+.grid-2{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:25px;
+}
+.box{
+  background:#0f172a;padding:25px;border-radius:14px;
+  border:1px solid rgba(255,255,255,0.05);
+  box-shadow:0 6px 22px rgba(0,0,0,0.35);
+}
+
+/* ================= PAGE 3: TICKET WORKFLOW ================= */
+.workflow{
+  padding:70px 20px;text-align:center;
+}
+.workflow h2{
+  font-size:30px;margin-bottom:25px;
+  background:linear-gradient(90deg,#f472b6,#ec4899);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.timeline{
+  max-width:850px;margin:auto;position:relative;
+}
+.step{
+  background:#111827;padding:20px;border-radius:12px;margin:20px 0;text-align:left;
+  border-left:6px solid #4ade80;
+  animation:fadeUp .7s ease;
+}
+.step h3{margin-bottom:6px;color:#4ade80;}
+.step p{color:#cbd5e1;}
+
+</style>
+</head>
+<body>
+
+<!-- ================= HOME PAGE ================= -->
+<section class="hero">
+  <h1>Resolve Issues Faster With Stackly Ticketing Tool</h1>
+  <p>Stackly helps IT teams manage, track, and resolve issues using a powerful,
+     visually rich, real-time dashboard designed for speed and intelligence.</p>
+  
+  <div class="hero-images">
+    <img src="stackly1.webp">
+    <img src="stakly2.webp">
+    <img src="stackly3.webp">
+  </div>
+</section>
+
+<!-- ================= FEATURES ================= -->
+<section class="features">
+  <h2>Why Choose Stackly?</h2>
+  <div class="feature-grid">
+    <div class="card"><img src="fastticket.webp"><h3>Fast Ticketing</h3><p>Create and assign tickets instantly.</p></div>
+    <div class="card"><img src="stackly1.webp"><h3>Automation</h3><p>Auto-assign, SLA alerts, workflows.</p></div>
+    <div class="card"><img src="dashboard.webp"><h3>Dashboard</h3><p>Real-time KPIs, workload, activity logs.</p></div>
+    <div class="card"><img src="stackly3.webp"><h3>Reports</h3><p>Analytics for teams, SLA, response times.</p></div>
+  </div>
+</section>
+
+<!-- ================= PAGE 2 ================= -->
+<section class="section">
+  <h2>Advanced Ticketing Overview</h2>
+  <p>Stackly Ticketing Tool is designed for modern IT operations. From issue creation to routing,
+     AI suggestions, priority scoring, team collaboration, and analytics — everything works together
+     to reduce resolution time.</p>
+
+  <div class="grid-2">
+    <div class="box"><h3>Smart Auto-Routing</h3><p>Tickets get assigned automatically based on department, workload, specialization, and priority.</p></div>
+    <div class="box"><h3>Real-Time Alerts</h3><p>Instant alerts for SLA breaches, new issues, customer updates, and emergency incidents.</p></div>
+    <div class="box"><h3>AI Priority Engine</h3><p>Machine learning models analyze keywords and metadata to assign severity levels.</p></div>
+    <div class="box"><h3>Team Collaboration</h3><p>Internal notes, tagging, mentions, file sharing, and real-time edits for teams.</p></div>
+  </div>
+</section>
+
+<!-- ================= PAGE 3 ================= -->
+<section class="workflow">
+  <h2>Ticket Workflow – How Stackly Works</h2>
+
+  <div class="timeline">
+    <div class="step"><h3>1. Create Ticket</h3><p>User submits issue with category, priority, screenshots.</p></div>
+    <div class="step"><h3>2. Auto Routing</h3><p>System assigns it to the best-fit agent by experience + load.</p></div>
+    <div class="step"><h3>3. Investigation</h3><p>Agent checks logs, files, history; asks questions if needed.</p></div>
+    <div class="step"><h3>4. Resolution</h3><p>Fix applied, verified, and documented.</p></div>
+    <div class="step"><h3>5. Closure & Reporting</h3><p>SLA metrics logged; data becomes part of analytics.</p></div>
+  </div>
+</section>
+
+</body>
+</html>
+<!-- ================= FOOTER START ================= -->
+<style>
+
+/* FOOTER BACKGROUND */
+footer{
+  background: linear-gradient(180deg, #021526, #031c33, #000d18);
+  color:#fff;
+  padding:60px 8%;
+  margin-top:80px;
+  position:relative;
+  overflow:hidden;
+  animation: footerFade 1s ease forwards;
+}
+
+/* Fade animation */
+@keyframes footerFade{
+  from{opacity:0; transform:translateY(40px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
+/* SOFT MOVING BACKLIGHT ANIMATION */
+footer::before{
+  content:"";
+  position:absolute;
+  top:-100px;
+  left:0;
+  width:120%;
+  height:200px;
+  background:radial-gradient(circle,#00eaff33,#000d18);
+  animation: moveLight 6s infinite linear;
+}
+@keyframes moveLight{
+  0%{transform:translateX(-30%);}
+  100%{transform:translateX(100%);}
+}
+
+/* GRID */
+.footer-container{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:40px;
+  align-items:flex-start;
+  position:relative;
+  z-index:2;
+}
+
+/* LEFT SIDE */
+.footer-left img{
+  height:60px;
+  margin-bottom:10px;
+  animation: fadeUp 1s ease forwards;
+  opacity:0;
+}
+.footer-left p{
+  opacity:0.85;
+  margin:8px 0 15px;
+  line-height:1.5;
+  animation: fadeUp 1.2s ease forwards;
+  opacity:0;
+}
+
+/* FADE UP ANIMATION */
+@keyframes fadeUp{
+  from{opacity:0; transform:translateY(20px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
+/* SOCIAL ICON HOVER FLOAT */
+.social-icons{
+  display:flex;
+  gap:12px;
+  margin-top:10px;
+}
+.social-icons a{
+  height:45px;
+  width:45px;
+  border-radius:50%;
+  background:#ffffff15;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  transition:.3s;
+  animation: fadeUp 1.4s ease forwards;
+  opacity:0;
+}
+.social-icons a:hover{
+  transform:translateY(-6px) scale(1.1);
+  background:#00eaff;
+}
+.social-icons img{
+  height:22px;
+  width:22px;
+}
+
+/* CENTER LINKS */
+.footer-links h3,
+.footer-contact h3{
+  margin-bottom:12px;
+  font-size:22px;
+  animation: fadeUp 1s ease forwards;
+  opacity:0;
+  color:#00eaff;
+  text-shadow:0 0 10px #00eaff55;
+}
+
+.footer-links a{
+  display:block;
+  text-decoration:none;
+  color:#cbd5e1;
+  margin:6px 0;
+  overflow:hidden;
+  position:relative;
+  animation: linkSlide .6s ease forwards;
+  opacity:0;
+}
+
+/* Slide links one by one */
+.footer-links a:nth-child(1){ animation-delay:.3s; }
+.footer-links a:nth-child(2){ animation-delay:.4s; }
+.footer-links a:nth-child(3){ animation-delay:.5s; }
+.footer-links a:nth-child(4){ animation-delay:.6s; }
+.footer-links a:nth-child(5){ animation-delay:.7s; }
+.footer-links a:nth-child(6){ animation-delay:.8s; }
+.footer-links a:nth-child(7){ animation-delay:.9s; }
+.footer-links a:nth-child(8){ animation-delay:1s; }
+.footer-links a:nth-child(9){ animation-delay:1.1s; }
+.footer-links a:nth-child(10){ animation-delay:1.2s; }
+
+@keyframes linkSlide{
+  from{opacity:0; transform:translateX(-20px);}
+  to{opacity:1; transform:translateX(0);}
+}
+
+.footer-links a:hover{
+  color:#00eaff;
+  transform:translateX(6px);
+}
+
+/* RIGHT CONTACT */
+.footer-contact p{
+  margin:6px 0;
+  opacity:.85;
+  animation: fadeUp 1s ease forwards;
+  opacity:0;
+}
+
+/* SUBSCRIBE BAR */
+.subscribe-box{
+  margin-top:15px;
+  display:flex;
+  animation: fadeUp 1.4s ease forwards;
+  opacity:0;
+}
+
+.subscribe-box input{
+  width:70%;
+  padding:10px;
+  border:none;
+  border-radius:6px 0 0 6px;
+  outline:none;
+  background:#ffffff10;
+  color:white;
+  transition:.3s;
+}
+.subscribe-box input:focus{
+  box-shadow:0 0 10px #00eaffaa;
+}
+
+.subscribe-box button{
+  width:30%;
+  border:none;
+  background:#00eaff;
+  color:#000;
+  font-weight:600;
+  cursor:pointer;
+  border-radius:0 6px 6px 0;
+  transition:.3s;
+}
+.subscribe-box button:hover{
+  background:#4ade80;
+}
+
+/* COPYRIGHT */
+.footer-bottom{
+  text-align:center;
+  padding-top:20px;
+  margin-top:30px;
+  border-top:1px solid #1e293b;
+  opacity:0;
+  animation: fadeUp 1.4s ease forwards;
+}
+
+/* MOBILE */
+/* MOBILE */
+@media(max-width:600px){
+
+  footer{
+    text-align:center; /* Keep entire footer centered */
+  }
+
+  .social-icons{
+    justify-content:center;
+  }
+
+  /* QUICK LINKS heading stays center */
+  .footer-links h3{
+    text-align:center !important;
+    width:100%;
+  }
+
+  /* QUICK LINKS items → left aligned */
+  .footer-links a{
+    text-align:left !important;
+    width:100%;
+    display:block;
+    margin-left:120px;       /* ensure left alignment */
+    padding-left:0;      /* ensure start alignment */
+  }
+
+  .subscribe-box{
+    flex-direction:column;
+  }
+
+  .subscribe-box input,
+  .subscribe-box button{
+    width:100%;
+    border-radius:6px;
+    margin-bottom:10px;
+  }
+}
+
+
+</style>
+
+
+<footer>
+  <div class="footer-container">
+
+    <!-- LEFT SIDE -->
+    <div class="footer-left">
+      <img src="Screenshot (7) (1) (1).webp" alt="Company Logo">
+      <p>Stackly Tickets helps teams track issues, resolve problems faster, and deliver smooth IT support.</p>
+
+      <div class="social-icons">
+        <a href="404.html"><img src="facebook.webp" alt="Facebook"></a>
+        <a href="404.html"><img src="twitter-logo.webp" alt="Twitter"></a>
+        <a href="404.html"><img src="linkedin.webp" alt="LinkedIn"></a>
+        <a href="404.html"><img src="instagram.webp" alt="Instagram"></a>
+      </div>
+    </div>
+
+    <!-- CENTER LINKS -->
+    <div class="footer-links">
+      <h3>Quick Links</h3>
+
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="compony.html">Company</a>
+      <a href="featuredprodutcs.html">Featured</a>
+      <a href="stacklyai.html">Stackly AI</a>
+      <a href="industries.html">Industries</a>
+      <a href="learning.html">Learning</a>
+      <a href="support.html">Support</a>
+      <a href="contact.html">Contact</a>
+      <a href="signup.html">Signin</a>
+    </div>
+
+    <!-- RIGHT CONTACT -->
+    <div class="footer-contact">
+      <h3>Contact Us</h3>
+      <p>📍 Bengaluru, Karnataka</p>
+      <p>📞 +91 98765 43210</p>
+      <p>✉ support@stacklyev.com</p>
+
+      <form action="404.html" method="get" class="subscribe-box">
+        <input type="email" name="email" placeholder="Enter your email" required>
+        <button type="submit">Join</button>
+      </form>
+    </div>
+
+  </div>
+
+  <p class="footer-bottom">© 2025 Stackly IT. All Rights Reserved.</p>
+</footer>
+
+<!-- ================= FOOTER END ================= -->

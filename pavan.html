@@ -1,0 +1,75 @@
+<!-- CONTACT FORM -->
+<h2 class="sec-title">Send Us a Message</h2>
+
+<div class="form-area" style="margin-bottom:120px;"> <!-- footer overlap fix -->
+  <form id="contactForm" class="contact-form-box">
+
+    <input type="text" id="cname" placeholder="Your Name (letters only)" required>
+    <span id="nameErr" class="error"></span>
+
+    <input type="text" id="cnumber" placeholder="Your Number (10 digits)" required>
+    <span id="numErr" class="error"></span>
+
+    <input type="email" id="cemail" placeholder="Your Email" required>
+    <span id="emailErr" class="error"></span>
+
+    <input type="text" id="csubject" placeholder="Subject" required>
+
+    <textarea id="cmessage" rows="4" placeholder="Type your message..." required></textarea>
+
+    <button type="submit">Submit</button>
+
+  </form>
+</div>
+
+<script>
+// LIVE INPUT CLEANING (PREVENT WRONG CHARACTERS WHILE TYPING)
+document.getElementById("cname").addEventListener("input", function () {
+  this.value = this.value.replace(/[^A-Za-z ]/g, "");
+});
+
+document.getElementById("cnumber").addEventListener("input", function () {
+  this.value = this.value.replace(/\D/g, "").slice(0, 10);
+});
+
+// VALIDATION ON SUBMIT
+document.getElementById("contactForm").addEventListener("submit", function(e){
+  e.preventDefault();
+
+  let valid = true;
+
+  let name = document.getElementById("cname").value.trim();
+  let number = document.getElementById("cnumber").value.trim();
+  let email = document.getElementById("cemail").value.trim();
+
+  // NAME CHECK
+  if(!/^[A-Za-z ]+$/.test(name)){
+    valid = false;
+    document.getElementById("nameErr").textContent = "Only alphabets allowed.";
+  } else {
+    document.getElementById("nameErr").textContent = "";
+  }
+
+  // NUMBER CHECK
+  if(!/^[0-9]{10}$/.test(number)){
+    valid = false;
+    document.getElementById("numErr").textContent = "Enter valid 10-digit number.";
+  } else {
+    document.getElementById("numErr").textContent = "";
+  }
+
+  // EMAIL CHECK
+  let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if(!emailRegex.test(email)){
+    valid = false;
+    document.getElementById("emailErr").textContent = "Enter valid email address.";
+  } else {
+    document.getElementById("emailErr").textContent = "";
+  }
+
+  // SUCCESS
+  if(valid){
+    window.location.href = "404.html";
+  }
+});
+</script>
